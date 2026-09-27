@@ -1,0 +1,289 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pofekt Store — Админка</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    color: #111;
+}
+
+header {
+    background: #111;
+    color: white;
+    padding: 18px 20px;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.container {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+}
+
+h1 {
+    margin-top: 10px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    margin-top: 20px;
+    box-shadow: 0 3px 15px rgba(0,0,0,.08);
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    margin-bottom: 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    border: 0;
+    border-radius: 10px;
+    background: #111;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.product {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 12px;
+}
+
+.product img {
+    width: 100%;
+    max-height: 250px;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+.delete {
+    background: #d93025;
+    margin-top: 10px;
+}
+
+.stock {
+    background: #333;
+    margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+POFEKT STORE — АДМИНКА
+</header>
+
+<div class="container">
+
+<h1>Добавить товар</h1>
+
+<div class="card">
+
+<input id="name" placeholder="Название товара">
+
+<input id="price" type="number" placeholder="Цена, ₽">
+
+<input id="category" placeholder="Категория: сумки, чехлы...">
+
+<textarea id="description" placeholder="Описание товара"></textarea>
+
+<select id="stock">
+<option value="in">В наличии</option>
+<option value="out">Нет в наличии</option>
+</select>
+
+<input id="photo" type="file" accept="image/*">
+
+<button onclick="addProduct()">
+Добавить товар
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>Товары</h2>
+
+<div id="products"></div>
+
+</div>
+
+</div>
+
+<script>
+
+let products =
+JSON.parse(localStorage.getItem("pofekt_products") || "[]");
+
+function save() {
+    localStorage.setItem(
+        "pofekt_products",
+        JSON.stringify(products)
+    );
+}
+
+function addProduct() {
+
+    let name = document.getElementById("name").value;
+    let price = document.getElementById("price").value;
+    let category = document.getElementById("category").value;
+    let description = document.getElementById("description").value;
+    let stock = document.getElementById("stock").value;
+    let photo = document.getElementById("photo").files[0];
+
+    if (!name || !price) {
+        alert("Введите название и цену");
+        return;
+    }
+
+    if (photo) {
+
+        let reader = new FileReader();
+
+        reader.onload = function(e) {
+
+            products.push({
+                name: name,
+                price: price,
+                category: category,
+                description: description,
+                stock: stock,
+                photo: e.target.result
+            });
+
+            save();
+            render();
+
+            alert("Товар добавлен!");
+
+        };
+
+        reader.readAsDataURL(photo);
+
+    } else {
+
+        products.push({
+            name: name,
+            price: price,
+            category: category,
+            description: description,
+            stock: stock,
+            photo: ""
+        });
+
+        save();
+        render();
+
+        alert("Товар добавлен!");
+    }
+}
+
+function render() {
+
+    let box = document.getElementById("products");
+
+    box.innerHTML = "";
+
+    products.forEach((product, index) => {
+
+        box.innerHTML += `
+
+        <div class="product">
+
+            ${
+                product.photo
+                ? `<img src="${product.photo}">`
+                : ""
+            }
+
+            <h3>${product.name}</h3>
+
+            <p>${product.description}</p>
+
+            <b>${product.price} ₽</b>
+
+            <p>
+            ${
+                product.stock === "in"
+                ? "🟢 В наличии"
+                : "🔴 Нет в наличии"
+            }
+            </p>
+
+            <button
+            class="stock"
+            onclick="toggleStock(${index})">
+            Изменить наличие
+            </button>
+
+            <button
+            class="delete"
+            onclick="deleteProduct(${index})">
+            Удалить
+            </button>
+
+        </div>
+
+        `;
+
+    });
+}
+
+function toggleStock(index) {
+
+    products[index].stock =
+        products[index].stock === "in"
+        ? "out"
+        : "in";
+
+    save();
+    render();
+}
+
+function deleteProduct(index) {
+
+    if (confirm("Удалить товар?")) {
+
+        products.splice(index, 1);
+
+        save();
+        render();
+
+    }
+}
+
+render();
+
+</script>
+
+</body>
+</html>
